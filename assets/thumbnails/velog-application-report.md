@@ -1,10 +1,10 @@
 # Velog Thumbnail Application Report
 
-- 확인 시각: 2026-06-14 13:27:19 KST
+- 확인 시각: 2026-06-14 13:50:55 KST
 - 대상 계정: `@sjh9714`
 - 기존 일괄 대상 게시글: 50개
 - 기존 일괄 썸네일 적용 완료: 50개
-- 증분 썸네일 적용 완료: 1개
+- 증분 썸네일 적용 완료: 2개
 - 시리즈 커버 4개는 Velog 게시글 썸네일 적용 대상이 아니므로 로컬 자산으로만 유지했습니다.
 
 ## Verification Summary
@@ -24,6 +24,7 @@
 | 확인 시각 | 제목 | Velog URL | 로컬 썸네일 | 확인된 썸네일 | 상태 |
 |---|---|---|---|---|---|
 | 2026-06-14 13:27:19 KST | [DAY11] [프로그래머스/Python] K번째수 - slicing과 sorted로 구간 정렬하기 | https://velog.io/@sjh9714/DAY11-프로그래머스Python-K번째수-slicing과-sorted로-구간-정렬하기 | `assets/thumbnails/posts/programmers-python/026-kth-number.png` | https://velog.velcdn.com/images/sjh9714/post/bb9932b8-48b8-442f-8a1c-44a125392611/image.png | applied |
+| 2026-06-14 13:50:55 KST | [DAY11] [프로그래머스/Python] 가장 큰 수 - 문자열 정렬 key와 x * 3 이해하기 | https://velog.io/@sjh9714/DAY11-프로그래머스Python-가장-큰-수-문자열-정렬-key와-x-3-이해하기 | `assets/thumbnails/posts/programmers-python/027-largest-number.png` | https://velog.velcdn.com/images/sjh9714/post/e4f866d4-c2f8-4595-b32c-741f79d52bd3/image.png | applied |
 
 ## Applied Posts
 
