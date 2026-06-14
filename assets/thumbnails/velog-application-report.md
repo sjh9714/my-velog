@@ -1,9 +1,10 @@
 # Velog Thumbnail Application Report
 
-- 확인 시각: 2026-06-14 11:45:36 KST
+- 확인 시각: 2026-06-14 13:27:19 KST
 - 대상 계정: `@sjh9714`
-- 대상 게시글: 50개
-- 썸네일 적용 완료: 50개
+- 기존 일괄 대상 게시글: 50개
+- 기존 일괄 썸네일 적용 완료: 50개
+- 증분 썸네일 적용 완료: 1개
 - 시리즈 커버 4개는 Velog 게시글 썸네일 적용 대상이 아니므로 로컬 자산으로만 유지했습니다.
 
 ## Verification Summary
@@ -17,6 +18,12 @@
   - 콘서트 예매 시스템: 글 카드 썸네일 로드 확인
   - 오픈소스 기여 하기: 글 카드 썸네일 로드 확인
   - 실시간 채팅 백엔드: 글 카드 썸네일 로드 확인
+
+## Incremental Updates
+
+| 확인 시각 | 제목 | Velog URL | 로컬 썸네일 | 확인된 썸네일 | 상태 |
+|---|---|---|---|---|---|
+| 2026-06-14 13:27:19 KST | [DAY11] [프로그래머스/Python] K번째수 - slicing과 sorted로 구간 정렬하기 | https://velog.io/@sjh9714/DAY11-프로그래머스Python-K번째수-slicing과-sorted로-구간-정렬하기 | `assets/thumbnails/posts/programmers-python/026-kth-number.png` | https://velog.velcdn.com/images/sjh9714/post/bb9932b8-48b8-442f-8a1c-44a125392611/image.png | applied |
 
 ## Applied Posts
 
