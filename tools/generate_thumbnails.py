@@ -1,39 +1,44 @@
 #!/usr/bin/env python3
-"""Generate Velog thumbnail images from local Markdown posts."""
+"""Generate Velog thumbnail images from local Markdown posts.
+
+The renderer uses a local HTML/CSS poster template and captures it with
+Headless Chrome. This keeps Korean text crisp while making the thumbnails feel
+closer to designed blog covers than plain generated cards.
+"""
 
 from __future__ import annotations
 
 import argparse
+import html
 import re
+import shutil
+import subprocess
+import tempfile
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterable
 
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image
 
 
 ROOT = Path(__file__).resolve().parents[1]
 OUTPUT_ROOT = ROOT / "assets" / "thumbnails"
 SIZE = (1080, 565)
-FONT_CANDIDATES = [
-    "/System/Library/Fonts/AppleSDGothicNeo.ttc",
-    "/System/Library/Fonts/Supplemental/AppleGothic.ttf",
-    "/System/Library/Fonts/Supplemental/Arial Unicode.ttf",
-    "/System/Library/Fonts/Supplemental/Arial.ttf",
-]
+CHROME = Path("/Applications/Google Chrome.app/Contents/MacOS/Google Chrome")
 
 
 @dataclass(frozen=True)
 class Palette:
-    background_top: str
-    background_bottom: str
-    panel: str
+    bg: str
+    bg_2: str
     text: str
     muted: str
     accent: str
     accent_2: str
-    chip_fill: str
+    accent_3: str
+    panel: str
+    chip: str
     chip_text: str
+    grid: str
 
 
 @dataclass(frozen=True)
@@ -52,62 +57,68 @@ SERIES: tuple[SeriesConfig, ...] = (
     SeriesConfig(
         key="realtime-chat",
         name="실시간 채팅 백엔드",
-        tagline="Boundaries of realtime messaging",
+        tagline="Realtime messaging boundaries",
         source=ROOT / "posts" / "velog" / "realtime-chat",
         output_dir=OUTPUT_ROOT / "posts" / "realtime-chat",
         palette=Palette(
-            background_top="#07111f",
-            background_bottom="#0f2b38",
-            panel="#102336",
-            text="#ecfeff",
-            muted="#a5f3fc",
+            bg="#07111f",
+            bg_2="#0f3440",
+            text="#f0fdff",
+            muted="#9de8f5",
             accent="#2dd4bf",
             accent_2="#38bdf8",
-            chip_fill="#143b4a",
-            chip_text="#cffafe",
+            accent_3="#f8fafc",
+            panel="rgba(12, 31, 48, 0.74)",
+            chip="rgba(45, 212, 191, 0.16)",
+            chip_text="#d8fbff",
+            grid="rgba(148, 240, 255, 0.09)",
         ),
         chips=("Spring Boot", "WebSocket", "Kafka"),
-        motif="network",
+        motif="realtime",
     ),
     SeriesConfig(
         key="concert-booking",
         name="콘서트 예매 시스템",
-        tagline="Concurrency, queues, and reliable booking",
+        tagline="Concurrency and reliable booking",
         source=ROOT / "posts" / "velog" / "concert-booking",
         output_dir=OUTPUT_ROOT / "posts" / "concert-booking",
         palette=Palette(
-            background_top="#111827",
-            background_bottom="#2b1720",
-            panel="#231d25",
+            bg="#111827",
+            bg_2="#371820",
             text="#fff7ed",
             muted="#fed7aa",
             accent="#f59e0b",
             accent_2="#ef4444",
-            chip_fill="#3b2630",
+            accent_3="#fef3c7",
+            panel="rgba(42, 30, 34, 0.78)",
+            chip="rgba(245, 158, 11, 0.16)",
             chip_text="#ffedd5",
+            grid="rgba(253, 186, 116, 0.08)",
         ),
         chips=("Spring Boot", "Concurrency", "Kafka"),
-        motif="seats",
+        motif="concert",
     ),
     SeriesConfig(
         key="open-source",
         name="오픈소스 기여",
-        tagline="Small diffs, tests, and maintainable PRs",
+        tagline="Small diffs, tests, trusted PRs",
         source=ROOT / "posts" / "velog" / "open-source",
         output_dir=OUTPUT_ROOT / "posts" / "open-source",
         palette=Palette(
-            background_top="#f8fafc",
-            background_bottom="#dcfce7",
-            panel="#ffffff",
+            bg="#f8fafc",
+            bg_2="#dff9e8",
             text="#0f172a",
             muted="#334155",
             accent="#16a34a",
             accent_2="#2563eb",
-            chip_fill="#dcfce7",
+            accent_3="#059669",
+            panel="rgba(255, 255, 255, 0.82)",
+            chip="rgba(22, 163, 74, 0.13)",
             chip_text="#14532d",
+            grid="rgba(15, 23, 42, 0.07)",
         ),
         chips=("Open Source", "Regression Test", "PR"),
-        motif="diff",
+        motif="opensource",
     ),
     SeriesConfig(
         key="programmers-python",
@@ -116,227 +127,22 @@ SERIES: tuple[SeriesConfig, ...] = (
         source=ROOT / "programmers-python" / "posts" / "velog",
         output_dir=OUTPUT_ROOT / "posts" / "programmers-python",
         palette=Palette(
-            background_top="#0f172a",
-            background_bottom="#172554",
-            panel="#111c38",
+            bg="#0f172a",
+            bg_2="#172554",
             text="#eff6ff",
             muted="#bfdbfe",
             accent="#facc15",
             accent_2="#60a5fa",
-            chip_fill="#1e3a8a",
+            accent_3="#34d399",
+            panel="rgba(17, 28, 56, 0.80)",
+            chip="rgba(96, 165, 250, 0.17)",
             chip_text="#dbeafe",
+            grid="rgba(191, 219, 254, 0.08)",
         ),
         chips=("Programmers", "Python", "Algorithm"),
-        motif="code",
+        motif="programmers",
     ),
 )
-
-
-def hex_to_rgb(value: str) -> tuple[int, int, int]:
-    value = value.lstrip("#")
-    return tuple(int(value[i : i + 2], 16) for i in (0, 2, 4))
-
-
-def mix(a: tuple[int, int, int], b: tuple[int, int, int], ratio: float) -> tuple[int, int, int]:
-    return tuple(int(x + (y - x) * ratio) for x, y in zip(a, b))
-
-
-def with_alpha(value: str, alpha: int) -> tuple[int, int, int, int]:
-    return (*hex_to_rgb(value), alpha)
-
-
-def font(size: int) -> ImageFont.FreeTypeFont | ImageFont.ImageFont:
-    for candidate in FONT_CANDIDATES:
-        if Path(candidate).exists():
-            try:
-                return ImageFont.truetype(candidate, size=size)
-            except OSError:
-                continue
-    return ImageFont.load_default()
-
-
-def text_size(draw: ImageDraw.ImageDraw, text: str, selected_font: ImageFont.ImageFont) -> tuple[int, int]:
-    box = draw.textbbox((0, 0), text, font=selected_font)
-    return box[2] - box[0], box[3] - box[1]
-
-
-def wrap_text(
-    draw: ImageDraw.ImageDraw,
-    text: str,
-    selected_font: ImageFont.ImageFont,
-    max_width: int,
-    max_lines: int,
-) -> list[str]:
-    tokens = re.findall(r"\[[^\]]+\]|[A-Za-z0-9_.:/+-]+|[가-힣]+|[^\s]", text)
-    lines: list[str] = []
-    current = ""
-
-    for token in tokens:
-        needs_space = bool(current) and re.match(r"[A-Za-z0-9_.:/+-]+|\[[^\]]+\]|[가-힣]+", token)
-        candidate = f"{current}{' ' if needs_space else ''}{token}" if current else token
-        if text_size(draw, candidate, selected_font)[0] <= max_width:
-            current = candidate
-            continue
-        if current:
-            lines.append(current)
-            current = token
-        else:
-            lines.append(token)
-            current = ""
-        if len(lines) == max_lines:
-            break
-
-    if current and len(lines) < max_lines:
-        lines.append(current)
-
-    if len(lines) > max_lines:
-        lines = lines[:max_lines]
-
-    if lines and text_size(draw, lines[-1], selected_font)[0] > max_width:
-        line = lines[-1]
-        while line and text_size(draw, f"{line}...", selected_font)[0] > max_width:
-            line = line[:-1]
-        lines[-1] = f"{line}..."
-
-    return lines
-
-
-def title_lines(draw: ImageDraw.ImageDraw, title: str, max_width: int, max_height: int) -> tuple[ImageFont.ImageFont, list[str], int]:
-    for size in range(56, 33, -2):
-        selected_font = font(size)
-        line_gap = 14
-        lines = wrap_text(draw, title, selected_font, max_width, 3)
-        height = len(lines) * size + max(0, len(lines) - 1) * line_gap
-        if height <= max_height and all(text_size(draw, line, selected_font)[0] <= max_width for line in lines):
-            return selected_font, lines, line_gap
-    selected_font = font(34)
-    return selected_font, wrap_text(draw, title, selected_font, max_width, 3), 10
-
-
-def rounded(draw: ImageDraw.ImageDraw, box: tuple[int, int, int, int], radius: int, fill: str | tuple[int, int, int, int], outline: str | None = None, width: int = 1) -> None:
-    draw.rounded_rectangle(box, radius=radius, fill=fill, outline=outline, width=width)
-
-
-def gradient_background(palette: Palette) -> Image.Image:
-    width, height = SIZE
-    top = hex_to_rgb(palette.background_top)
-    bottom = hex_to_rgb(palette.background_bottom)
-    img = Image.new("RGB", SIZE)
-    pixels = img.load()
-    for y in range(height):
-        ratio = y / max(1, height - 1)
-        color = mix(top, bottom, ratio)
-        for x in range(width):
-            pixels[x, y] = color
-    overlay = Image.new("RGBA", SIZE, (0, 0, 0, 0))
-    draw = ImageDraw.Draw(overlay)
-    draw.ellipse((670, -140, 1250, 430), fill=with_alpha(palette.accent, 42))
-    draw.ellipse((780, 260, 1190, 720), fill=with_alpha(palette.accent_2, 38))
-    return Image.alpha_composite(img.convert("RGBA"), overlay)
-
-
-def draw_header(draw: ImageDraw.ImageDraw, config: SeriesConfig) -> None:
-    palette = config.palette
-    small = font(24)
-    pill_font = font(23)
-    draw.text((64, 52), "sjh9714.log", fill=palette.muted, font=small)
-    pill_text = config.name
-    tw, th = text_size(draw, pill_text, pill_font)
-    rounded(draw, (64, 90, 64 + tw + 34, 132), 21, with_alpha(palette.chip_fill, 220))
-    draw.text((81, 99), pill_text, fill=palette.chip_text, font=pill_font)
-
-
-def draw_chips(draw: ImageDraw.ImageDraw, config: SeriesConfig, extra: Iterable[str] = ()) -> None:
-    x, y = 64, 467
-    chip_font = font(22)
-    for chip in (*extra, *config.chips):
-        tw, th = text_size(draw, chip, chip_font)
-        rounded(draw, (x, y, x + tw + 30, y + 40), 20, with_alpha(config.palette.chip_fill, 218))
-        draw.text((x + 15, y + 9), chip, fill=config.palette.chip_text, font=chip_font)
-        x += tw + 44
-        if x > 710:
-            break
-
-
-def draw_title(draw: ImageDraw.ImageDraw, config: SeriesConfig, title: str, subtitle: str) -> None:
-    selected_font, lines, line_gap = title_lines(draw, title, max_width=620, max_height=210)
-    y = 182
-    for line in lines:
-        draw.text((64, y), line, fill=config.palette.text, font=selected_font)
-        y += selected_font.size + line_gap
-    if subtitle:
-        draw.text((66, min(y + 14, 404)), subtitle, fill=config.palette.muted, font=font(25))
-
-
-def draw_network(draw: ImageDraw.ImageDraw, config: SeriesConfig) -> None:
-    p = config.palette
-    nodes = [(802, 166), (934, 142), (902, 292), (760, 338), (976, 402)]
-    for start, end in [(0, 1), (1, 2), (2, 3), (2, 4), (0, 3)]:
-        draw.line((nodes[start], nodes[end]), fill=with_alpha(p.accent_2, 160), width=4)
-    for x, y in nodes:
-        draw.ellipse((x - 18, y - 18, x + 18, y + 18), fill=with_alpha(p.accent, 230))
-        draw.ellipse((x - 7, y - 7, x + 7, y + 7), fill=p.text)
-    for idx, y in enumerate((216, 248, 454)):
-        rounded(draw, (760, y, 1010 - idx * 38, y + 26), 13, with_alpha(p.panel, 190), outline=p.accent)
-
-
-def draw_seats(draw: ImageDraw.ImageDraw, config: SeriesConfig) -> None:
-    p = config.palette
-    start_x, start_y = 754, 160
-    for row in range(6):
-        for col in range(6):
-            x = start_x + col * 42
-            y = start_y + row * 38
-            fill = p.accent if (row + col) % 4 == 0 else p.panel
-            rounded(draw, (x, y, x + 27, y + 24), 7, with_alpha(fill, 230), outline=with_alpha(p.accent, 170))
-    draw.arc((836, 360, 940, 468), 200, -20, fill=p.accent, width=8)
-    rounded(draw, (806, 415, 970, 500), 18, with_alpha(p.panel, 230), outline=p.accent_2, width=3)
-    draw.rectangle((876, 448, 900, 477), fill=p.accent)
-
-
-def draw_diff(draw: ImageDraw.ImageDraw, config: SeriesConfig) -> None:
-    p = config.palette
-    rounded(draw, (736, 148, 1008, 440), 24, with_alpha(p.panel, 230), outline=with_alpha(p.accent, 130), width=2)
-    diff_font = font(25)
-    rows = [
-        ("+", "test fails first", p.accent),
-        ("+", "small code diff", p.accent),
-        ("-", "hidden bug", "#ef4444"),
-        ("+", "review ready", p.accent_2),
-    ]
-    y = 196
-    for sign, text, color in rows:
-        draw.text((770, y), sign, fill=color, font=diff_font)
-        rounded(draw, (808, y + 5, 960, y + 25), 10, with_alpha(color, 70))
-        draw.text((810, y - 25), text, fill=p.muted, font=font(18))
-        y += 58
-    draw.line((780, 395, 955, 395), fill=p.accent, width=5)
-    draw.line((780, 395, 826, 350), fill=p.accent, width=5)
-
-
-def draw_code(draw: ImageDraw.ImageDraw, config: SeriesConfig) -> None:
-    p = config.palette
-    rounded(draw, (724, 144, 1008, 430), 24, with_alpha(p.panel, 230), outline=with_alpha(p.accent_2, 150), width=2)
-    line_y = 188
-    widths = [210, 156, 230, 112, 196, 148]
-    for idx, width in enumerate(widths):
-        color = p.accent if idx in (1, 4) else p.accent_2
-        rounded(draw, (766, line_y, 766 + width, line_y + 18), 9, with_alpha(color, 170))
-        line_y += 38
-    for x, y in [(788, 406), (864, 406), (940, 406)]:
-        draw.ellipse((x - 13, y - 13, x + 13, y + 13), fill=p.accent)
-        draw.line((x - 6, y, x - 1, y + 5, x + 8, y - 7), fill=p.background_top, width=3)
-
-
-def draw_motif(draw: ImageDraw.ImageDraw, config: SeriesConfig) -> None:
-    if config.motif == "network":
-        draw_network(draw, config)
-    elif config.motif == "seats":
-        draw_seats(draw, config)
-    elif config.motif == "diff":
-        draw_diff(draw, config)
-    elif config.motif == "code":
-        draw_code(draw, config)
 
 
 def read_title(path: Path) -> str:
@@ -366,6 +172,10 @@ def display_title(title: str) -> str:
     return display or title
 
 
+def markdown_posts(config: SeriesConfig) -> list[Path]:
+    return sorted(path for path in config.source.glob("*.md") if path.name != "README.md")
+
+
 def post_extra_chips(path: Path, title: str) -> tuple[str, ...]:
     chips: list[str] = []
     day_match = re.search(r"\[DAY(\d+)\]", title, re.IGNORECASE)
@@ -377,45 +187,560 @@ def post_extra_chips(path: Path, title: str) -> tuple[str, ...]:
     return tuple(chips[:2])
 
 
-def render_card(config: SeriesConfig, title: str, subtitle: str, out_path: Path, extra_chips: tuple[str, ...] = ()) -> None:
-    img = gradient_background(config.palette)
-    draw = ImageDraw.Draw(img)
-    draw_header(draw, config)
-    draw_motif(draw, config)
-    draw_title(draw, config, title, subtitle)
-    draw_chips(draw, config, extra_chips)
+def esc(value: str) -> str:
+    return html.escape(value, quote=True)
+
+
+def chip_markup(chips: tuple[str, ...]) -> str:
+    return "\n".join(f'<span class="chip">{esc(chip)}</span>' for chip in chips)
+
+
+def motif_markup(kind: str) -> str:
+    if kind == "realtime":
+        return """
+        <div class="visual realtime-visual">
+          <div class="route-card">
+            <div class="route-line top"></div>
+            <div class="route-line middle"></div>
+            <div class="route-line bottom"></div>
+            <div class="route-node client">CLIENT</div>
+            <div class="route-node stomp">STOMP</div>
+            <div class="route-node kafka">KAFKA</div>
+            <div class="route-node db">DB</div>
+            <div class="pulse one"></div>
+            <div class="pulse two"></div>
+          </div>
+          <div class="terminal">
+            <span>/app/chat.send</span>
+            <span>/topic/rooms/{id}</span>
+            <span>ACK -> PERSISTED</span>
+          </div>
+        </div>
+        """
+    if kind == "concert":
+        seats = "\n".join(f'<i class="seat s{i}"></i>' for i in range(42))
+        return f"""
+        <div class="visual concert-visual">
+          <div class="stage">CONCERT</div>
+          <div class="seat-map">{seats}</div>
+          <div class="queue-card">
+            <span>WAITING QUEUE</span>
+            <b>LOCK</b>
+            <em>payment boundary</em>
+          </div>
+        </div>
+        """
+    if kind == "opensource":
+        return """
+        <div class="visual opensource-visual">
+          <div class="pr-card">
+            <div class="pr-head"><b>Pull Request</b><span>review ready</span></div>
+            <p class="add">+ regression test</p>
+            <p class="add">+ small implementation diff</p>
+            <p class="del">- hidden bug path</p>
+            <p class="add">+ documented edge case</p>
+            <div class="status-row"><span>tests passing</span><b>MERGEABLE</b></div>
+          </div>
+        </div>
+        """
+    return """
+    <div class="visual programmers-visual">
+      <div class="editor">
+        <div class="dots"><i></i><i></i><i></i></div>
+        <code><b>def</b> solution(data):</code>
+        <code>    seen = set(data)</code>
+        <code>    return min(limit, len(seen))</code>
+        <div class="checks"><span>input</span><span>edge</span><span>O(n)</span></div>
+      </div>
+      <div class="day-orbit">DAILY</div>
+    </div>
+    """
+
+
+def html_document(config: SeriesConfig, title: str, subtitle: str, extra_chips: tuple[str, ...]) -> str:
+    p = config.palette
+    chips = chip_markup((*extra_chips, *config.chips))
+    return f"""<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1080, initial-scale=1">
+<style>
+  :root {{
+    --bg: {p.bg};
+    --bg2: {p.bg_2};
+    --text: {p.text};
+    --muted: {p.muted};
+    --accent: {p.accent};
+    --accent2: {p.accent_2};
+    --accent3: {p.accent_3};
+    --panel: {p.panel};
+    --chip: {p.chip};
+    --chipText: {p.chip_text};
+    --grid: {p.grid};
+  }}
+  * {{ box-sizing: border-box; }}
+  body {{
+    margin: 0;
+    width: 1080px;
+    height: 565px;
+    overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", "Pretendard", "Segoe UI", sans-serif;
+    background: var(--bg);
+  }}
+  .card {{
+    position: relative;
+    width: 1080px;
+    height: 565px;
+    padding: 52px 62px;
+    color: var(--text);
+    isolation: isolate;
+    background:
+      radial-gradient(circle at 86% 14%, color-mix(in srgb, var(--accent) 38%, transparent), transparent 34%),
+      radial-gradient(circle at 92% 82%, color-mix(in srgb, var(--accent2) 32%, transparent), transparent 38%),
+      linear-gradient(135deg, var(--bg) 0%, var(--bg2) 100%);
+  }}
+  .card::before {{
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -2;
+    opacity: .95;
+    background-image:
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size: 34px 34px;
+    mask-image: linear-gradient(90deg, rgba(0,0,0,.75), rgba(0,0,0,.2) 58%, rgba(0,0,0,.65));
+  }}
+  .card::after {{
+    content: "";
+    position: absolute;
+    inset: -40px;
+    z-index: -1;
+    opacity: .22;
+    background:
+      repeating-linear-gradient(115deg, rgba(255,255,255,.12) 0 1px, transparent 1px 9px);
+    mix-blend-mode: overlay;
+  }}
+  .topline {{
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    color: var(--muted);
+    font-size: 23px;
+    letter-spacing: 0;
+  }}
+  .brand {{
+    font-weight: 700;
+  }}
+  .series-pill {{
+    padding: 9px 18px 10px;
+    border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
+    border-radius: 999px;
+    color: var(--chipText);
+    background: var(--chip);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, .16);
+  }}
+  .content {{
+    position: relative;
+    z-index: 2;
+    width: 572px;
+    height: 370px;
+    margin-top: 47px;
+  }}
+  .kicker {{
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 22px;
+    color: var(--accent);
+    font-size: 22px;
+    font-weight: 800;
+    text-transform: uppercase;
+  }}
+  .kicker::before {{
+    content: "";
+    width: 42px;
+    height: 2px;
+    border-radius: 99px;
+    background: var(--accent);
+  }}
+  .title {{
+    max-width: 572px;
+    max-height: 210px;
+    overflow: hidden;
+    color: var(--text);
+    font-size: 58px;
+    line-height: 1.12;
+    font-weight: 860;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+    word-break: keep-all;
+    overflow-wrap: anywhere;
+    text-shadow: 0 20px 48px rgba(0, 0, 0, .24);
+  }}
+  .subtitle {{
+    margin-top: 23px;
+    color: var(--muted);
+    font-size: 24px;
+    line-height: 1.35;
+    font-weight: 600;
+  }}
+  .chips {{
+    position: absolute;
+    left: 62px;
+    right: 390px;
+    bottom: 50px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+  }}
+  .chip {{
+    display: inline-flex;
+    height: 39px;
+    align-items: center;
+    padding: 0 17px;
+    border: 1px solid color-mix(in srgb, var(--accent) 32%, transparent);
+    border-radius: 999px;
+    color: var(--chipText);
+    background: var(--chip);
+    font-size: 20px;
+    font-weight: 650;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, .12);
+  }}
+  .visual {{
+    position: absolute;
+    right: 55px;
+    top: 104px;
+    width: 352px;
+    height: 365px;
+    border: 1px solid color-mix(in srgb, var(--accent) 50%, transparent);
+    border-radius: 34px;
+    background: color-mix(in srgb, var(--panel) 90%, transparent);
+    box-shadow: 0 34px 90px rgba(0, 0, 0, .28), inset 0 1px 0 rgba(255,255,255,.16);
+    backdrop-filter: blur(18px);
+    overflow: hidden;
+  }}
+  .visual::before {{
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(circle at 30% 10%, color-mix(in srgb, var(--accent) 30%, transparent), transparent 30%),
+      linear-gradient(135deg, rgba(255,255,255,.08), transparent 38%);
+    pointer-events: none;
+  }}
+  .route-card {{
+    position: absolute;
+    inset: 32px 32px 178px;
+  }}
+  .route-line {{
+    position: absolute;
+    height: 4px;
+    border-radius: 99px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    box-shadow: 0 0 24px color-mix(in srgb, var(--accent2) 70%, transparent);
+    transform-origin: left center;
+  }}
+  .route-line.top {{ left: 46px; top: 44px; width: 162px; transform: rotate(-10deg); }}
+  .route-line.middle {{ left: 78px; top: 102px; width: 140px; transform: rotate(12deg); }}
+  .route-line.bottom {{ left: 74px; top: 134px; width: 132px; transform: rotate(-12deg); }}
+  .route-node {{
+    position: absolute;
+    width: 78px;
+    height: 42px;
+    display: grid;
+    place-items: center;
+    border: 1px solid color-mix(in srgb, var(--accent) 60%, transparent);
+    border-radius: 999px;
+    color: var(--text);
+    background: color-mix(in srgb, var(--bg) 58%, transparent);
+    font-size: 13px;
+    font-weight: 900;
+  }}
+  .client {{ left: 0; top: 22px; }}
+  .stomp {{ right: 10px; top: 0; }}
+  .kafka {{ left: 44px; bottom: 10px; }}
+  .db {{ right: 0; bottom: 0; }}
+  .pulse {{
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 0 10px color-mix(in srgb, var(--accent) 15%, transparent);
+  }}
+  .pulse.one {{ left: 136px; top: 39px; }}
+  .pulse.two {{ right: 78px; top: 118px; background: var(--accent2); }}
+  .terminal {{
+    position: absolute;
+    left: 28px;
+    right: 28px;
+    bottom: 23px;
+    display: grid;
+    gap: 11px;
+    color: var(--muted);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 15px;
+  }}
+  .terminal span {{
+    padding: 9px 12px;
+    border-radius: 12px;
+    background: rgba(0,0,0,.22);
+    border: 1px solid color-mix(in srgb, var(--accent2) 24%, transparent);
+  }}
+  .stage {{
+    position: absolute;
+    left: 55px;
+    top: 28px;
+    width: 242px;
+    height: 40px;
+    display: grid;
+    place-items: center;
+    border-radius: 0 0 24px 24px;
+    background: linear-gradient(90deg, var(--accent2), var(--accent));
+    color: #111827;
+    font-size: 15px;
+    font-weight: 1000;
+  }}
+  .seat-map {{
+    position: absolute;
+    left: 57px;
+    top: 92px;
+    display: grid;
+    grid-template-columns: repeat(7, 20px);
+    gap: 8px;
+  }}
+  .seat {{
+    width: 20px;
+    height: 20px;
+    border: 1px solid var(--accent);
+    border-radius: 7px 7px 10px 10px;
+    background: rgba(0,0,0,.16);
+  }}
+  .seat:nth-child(5n+1), .seat:nth-child(7n+3) {{
+    background: var(--accent);
+    box-shadow: 0 0 20px color-mix(in srgb, var(--accent) 45%, transparent);
+  }}
+  .queue-card {{
+    position: absolute;
+    left: 42px;
+    right: 42px;
+    bottom: 32px;
+    padding: 14px 18px;
+    border: 1px solid color-mix(in srgb, var(--accent2) 60%, transparent);
+    border-radius: 24px;
+    background: color-mix(in srgb, var(--bg) 72%, transparent);
+    box-shadow: 0 22px 44px rgba(0,0,0,.24);
+  }}
+  .queue-card span, .queue-card em {{
+    display: block;
+    color: var(--muted);
+    font-size: 14px;
+    font-style: normal;
+  }}
+  .queue-card b {{
+    display: block;
+    margin: 4px 0;
+    color: var(--accent);
+    font-size: 30px;
+    letter-spacing: .1em;
+  }}
+  .pr-card {{
+    position: absolute;
+    inset: 28px 30px;
+    padding: 22px;
+    border-radius: 28px;
+    background: rgba(255,255,255,.72);
+    box-shadow: inset 0 0 0 1px rgba(15,23,42,.08);
+  }}
+  .pr-head {{
+    display: flex;
+    justify-content: space-between;
+    color: var(--text);
+    font-size: 17px;
+  }}
+  .pr-head span {{
+    color: var(--accent);
+    font-size: 13px;
+    font-weight: 900;
+  }}
+  .pr-card p {{
+    margin: 12px 0 0;
+    padding: 9px 13px;
+    border-radius: 13px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 14px;
+  }}
+  .pr-card .add {{ color: #14532d; background: rgba(22,163,74,.13); }}
+  .pr-card .del {{ color: #991b1b; background: rgba(239,68,68,.13); }}
+  .status-row {{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 14px;
+    color: var(--muted);
+    font-size: 13px;
+  }}
+  .status-row b {{
+    color: white;
+    background: var(--accent);
+    padding: 8px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+  }}
+  .editor {{
+    position: absolute;
+    inset: 34px 28px 74px;
+    padding: 26px 22px;
+    border-radius: 26px;
+    background: rgba(3, 7, 18, .43);
+    border: 1px solid color-mix(in srgb, var(--accent2) 45%, transparent);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }}
+  .dots {{
+    display: flex;
+    gap: 8px;
+    margin-bottom: 28px;
+  }}
+  .dots i {{
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    background: var(--accent);
+  }}
+  .editor code {{
+    display: block;
+    margin: 17px 0;
+    color: var(--muted);
+    font-size: 16px;
+  }}
+  .editor code b {{
+    color: var(--accent);
+  }}
+  .checks {{
+    display: flex;
+    gap: 10px;
+    margin-top: 24px;
+  }}
+  .checks span {{
+    color: var(--bg);
+    background: var(--accent);
+    border-radius: 999px;
+    padding: 7px 10px;
+    font-size: 13px;
+    font-weight: 900;
+  }}
+  .day-orbit {{
+    position: absolute;
+    right: 24px;
+    bottom: 20px;
+    width: 116px;
+    height: 38px;
+    display: grid;
+    place-items: center;
+    border-radius: 999px;
+    color: var(--bg);
+    background: var(--accent);
+    font-size: 16px;
+    font-weight: 1000;
+    box-shadow: 0 0 30px color-mix(in srgb, var(--accent) 38%, transparent);
+  }}
+</style>
+</head>
+<body>
+  <main class="card">
+    <div class="topline">
+      <span class="brand">sjh9714.log</span>
+      <span class="series-pill">{esc(config.name)}</span>
+    </div>
+    <section class="content">
+      <div class="kicker">{esc(config.key.replace("-", " "))}</div>
+      <div class="title" id="title">{esc(title)}</div>
+      <div class="subtitle">{esc(subtitle)}</div>
+    </section>
+    <section class="chips">{chips}</section>
+    {motif_markup(config.motif)}
+  </main>
+  <script>
+    const title = document.getElementById("title");
+    let size = Number.parseFloat(getComputedStyle(title).fontSize);
+    while ((title.scrollHeight > title.clientHeight || title.scrollWidth > title.clientWidth) && size > 34) {{
+      size -= 2;
+      title.style.fontSize = size + "px";
+    }}
+  </script>
+</body>
+</html>
+"""
+
+
+def screenshot_command(html_path: Path, out_path: Path) -> list[str]:
+    return [
+        "npx",
+        "playwright",
+        "screenshot",
+        "--browser",
+        "chromium",
+        "--channel",
+        "chrome",
+        "--viewport-size",
+        f"{SIZE[0]},{SIZE[1]}",
+        "--wait-for-selector",
+        ".card",
+        "--wait-for-timeout",
+        "120",
+        "--timeout",
+        "15000",
+        html_path.as_uri(),
+        str(out_path),
+    ]
+
+
+def render_card(config: SeriesConfig, title: str, subtitle: str, out_path: Path, extra_chips: tuple[str, ...], tmp_dir: Path) -> None:
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    img.convert("RGB").save(out_path, quality=95, optimize=True)
-
-
-def markdown_posts(config: SeriesConfig) -> list[Path]:
-    return sorted(path for path in config.source.glob("*.md") if path.name != "README.md")
+    html_path = tmp_dir / f"{out_path.stem}.html"
+    html_path.write_text(html_document(config, title, subtitle, extra_chips), encoding="utf-8")
+    subprocess.run(screenshot_command(html_path, out_path), check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=35)
 
 
 def generate() -> list[Path]:
-    generated: list[Path] = []
-    for config in SERIES:
-        series_out = OUTPUT_ROOT / "series" / f"{config.key}.png"
-        render_card(config, config.name, config.tagline, series_out, ("Series",))
-        generated.append(series_out)
+    if not CHROME.exists():
+        raise SystemExit(f"Google Chrome not found: {CHROME}")
+    if not shutil.which("npx"):
+        raise SystemExit("npx not found; Playwright CLI is required for screenshot rendering.")
 
-        for post in markdown_posts(config):
-            title = read_title(post)
-            out = config.output_dir / f"{post.stem}.png"
-            render_card(config, display_title(title), config.name, out, post_extra_chips(post, title))
-            generated.append(out)
+    generated: list[Path] = []
+    with tempfile.TemporaryDirectory(prefix="velog-thumbnails-") as tmp:
+        tmp_dir = Path(tmp)
+        for config in SERIES:
+            series_out = OUTPUT_ROOT / "series" / f"{config.key}.png"
+            render_card(config, config.name, config.tagline, series_out, ("Series",), tmp_dir)
+            generated.append(series_out)
+
+            for post in markdown_posts(config):
+                title = read_title(post)
+                out = config.output_dir / f"{post.stem}.png"
+                render_card(config, display_title(title), config.name, out, post_extra_chips(post, title), tmp_dir)
+                generated.append(out)
     return generated
 
 
+def all_expected_paths() -> list[Path]:
+    paths = [OUTPUT_ROOT / "series" / f"{config.key}.png" for config in SERIES]
+    for config in SERIES:
+        paths.extend(config.output_dir / f"{post.stem}.png" for post in markdown_posts(config))
+    return paths
+
+
 def check_images(paths: list[Path]) -> None:
-    expected_size = SIZE
     failures: list[str] = []
     for path in paths:
         if not path.exists():
             failures.append(f"missing: {path}")
             continue
         with Image.open(path) as img:
-            if img.size != expected_size:
+            if img.size != SIZE:
                 failures.append(f"bad size: {path} -> {img.size}")
     if failures:
         raise SystemExit("\n".join(failures))
@@ -428,12 +753,18 @@ def expected_count() -> int:
 def main() -> None:
     parser = argparse.ArgumentParser(description="Generate Velog thumbnail PNGs.")
     parser.add_argument("--check", action="store_true", help="Check generated images without rewriting them.")
+    parser.add_argument("--chrome-version", action="store_true", help="Print the Chrome version used by the renderer.")
     args = parser.parse_args()
 
+    if args.chrome_version:
+        if not CHROME.exists():
+            raise SystemExit(f"Google Chrome not found: {CHROME}")
+        result = subprocess.run([str(CHROME), "--version"], check=True, capture_output=True, text=True)
+        print(result.stdout.strip())
+        return
+
     if args.check:
-        paths = [OUTPUT_ROOT / "series" / f"{config.key}.png" for config in SERIES]
-        for config in SERIES:
-            paths.extend(config.output_dir / f"{post.stem}.png" for post in markdown_posts(config))
+        paths = all_expected_paths()
         check_images(paths)
         print(f"Checked {len(paths)} thumbnails at {SIZE[0]}x{SIZE[1]}.")
         return

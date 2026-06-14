@@ -4,6 +4,8 @@ Velog 시리즈와 게시글에 사용할 썸네일 이미지 모음입니다.
 
 ## 생성 방법
 
+썸네일은 로컬 Markdown 제목을 읽어 HTML/CSS 포스터 템플릿으로 렌더링한 뒤, Playwright CLI와 설치된 Google Chrome으로 PNG 캡처합니다.
+
 루트 디렉터리에서 아래 명령을 실행합니다.
 
 ```bash
@@ -21,7 +23,8 @@ python3 tools/generate_thumbnails.py --check
 - 크기: 1080x565
 - 형식: PNG
 - 비율: Velog 썸네일에 맞춘 약 1.91:1
-- 글꼴: macOS 한글 글꼴 우선 사용
+- 렌더링: HTML/CSS + Google Chrome headless
+- 글꼴: macOS 시스템 한글 글꼴 우선 사용
 
 ## 폴더 구조
 
