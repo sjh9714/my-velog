@@ -144,3 +144,17 @@
 | 51 | [DAY11] [프로그래머스/Python] K번째수 - slicing과 sorted로 구간 정렬하기 | https://velog.io/@sjh9714/DAY11-프로그래머스Python-K번째수-slicing과-sorted로-구간-정렬하기 | `assets/thumbnails/posts/programmers-python/026-kth-number.png` | https://velog.velcdn.com/images/sjh9714/post/7d909428-e71b-442d-84e2-00305878d2a5/image.png | applied |
 | 52 | [DAY11] [프로그래머스/Python] 가장 큰 수 - 문자열 정렬 key와 x * 3 이해하기 | https://velog.io/@sjh9714/DAY11-프로그래머스Python-가장-큰-수-문자열-정렬-key와-x-3-이해하기 | `assets/thumbnails/posts/programmers-python/027-largest-number.png` | https://velog.velcdn.com/images/sjh9714/post/3132b826-e106-4779-a935-3f6e1f1cb04c/image.png | applied |
 | 53 | [DAY12] [프로그래머스/Python] H-Index - 내림차순 정렬과 citation >= i 이해하기 | https://velog.io/@sjh9714/DAY12-프로그래머스Python-H-Index-내림차순-정렬과-citation-i-이해하기 | `assets/thumbnails/posts/programmers-python/028-h-index.png` | https://velog.velcdn.com/images/sjh9714/post/4c33ba02-c0dd-4995-bc43-69dfba6da1d2/image.png | applied |
+
+## 2026-06-27 22:09:06 KST - 하나 청년 금융인재 프로젝트 1차 발행 결과
+
+- 적용 대상: 신규 Velog 게시글 5개
+- 적용 방식: `hana-finance-ai` 시리즈 공통 AI 배경 + HTML/CSS 텍스트 오버레이 PNG 업로드
+- 검증: Velog GraphQL 기준 5개 모두 `thumbnail` 값 존재, 시리즈 `하나 청년 금융인재 프로젝트` 연결 확인
+
+| No | 제목 | Velog URL | 로컬 썸네일 | Velog thumbnail | 결과 |
+|---:|---|---|---|---|---|
+| 1 | [하나 금융인재 프로젝트] 학습 기록을 포트폴리오로 재구성한 이유 | https://velog.io/@sjh9714/hana-finance-ai-portfolio-reorganization | `assets/thumbnails/posts/hana-finance-ai/00-portfolio-reorganization.png` | https://velog.velcdn.com/images/sjh9714/post/7a308503-61e0-412e-bfc6-5c831202bee3/image.png | applied |
+| 2 | [금융 데이터 분석] Pandas로 신용카드 거래 데이터 EDA 구조 잡기 | https://velog.io/@sjh9714/hana-credit-card-eda | `assets/thumbnails/posts/hana-finance-ai/01-credit-card-eda.png` | https://velog.velcdn.com/images/sjh9714/post/ec1b3a81-c03b-4500-9863-4a230192fdc6/image.png | applied |
+| 3 | [금융 AI] 프롬프트는 요구사항 명세에 가깝다 | https://velog.io/@sjh9714/hana-finance-prompt-engineering | `assets/thumbnails/posts/hana-finance-ai/02-finance-prompt-engineering.png` | https://velog.velcdn.com/images/sjh9714/post/d3323141-8e09-4fdb-92d4-c67ddb651a40/image.png | applied |
+| 4 | [RAG 챗봇] PDF 문서를 검색 가능한 지식베이스로 바꾸기 | https://velog.io/@sjh9714/hana-pdf-rag-knowledge-base | `assets/thumbnails/posts/hana-finance-ai/03-pdf-rag-knowledge-base.png` | https://velog.velcdn.com/images/sjh9714/post/884b75de-2af0-4abd-9b16-936eee551149/image.png | applied |
+| 5 | [LangGraph] 금융/문서 챗봇에 Tool Router를 붙이며 배운 점 | https://velog.io/@sjh9714/hana-langgraph-tool-router | `assets/thumbnails/posts/hana-finance-ai/04-langgraph-tool-router.png` | https://velog.velcdn.com/images/sjh9714/post/c449f68a-3252-4ee3-9c75-b0c10fd92067/image.png | applied |

@@ -4,7 +4,7 @@ Velog 시리즈와 게시글에 사용할 썸네일 이미지 모음입니다.
 
 ## 생성 방법
 
-썸네일은 시리즈별 공통 AI 배경 4장 위에 로컬 Markdown 제목을 HTML/CSS 포스터 템플릿으로 얹은 뒤, Playwright CLI와 설치된 Google Chrome으로 PNG 캡처합니다.
+썸네일은 시리즈별 공통 AI 배경 위에 로컬 Markdown 제목을 HTML/CSS 포스터 템플릿으로 얹은 뒤, Playwright CLI와 설치된 Google Chrome으로 PNG 캡처합니다.
 
 루트 디렉터리에서 아래 명령을 실행합니다.
 
@@ -36,11 +36,12 @@ python3 tools/generate_thumbnails.py --check
 - `posts/concert-booking/`: 콘서트 예매 시스템 게시글 썸네일
 - `posts/open-source/`: 오픈소스 기여 게시글 썸네일
 - `posts/programmers-python/`: 프로그래머스 Python 코딩테스트 게시글 썸네일
+- `posts/hana-finance-ai/`: 하나 청년 금융인재 프로젝트 게시글 썸네일
 - `ai-backgrounds/series/`: 텍스트가 없는 시리즈별 공통 AI 배경 원본
 
 ## 배경 재생성 순서
 
-1. `ai-backgrounds/series/` 아래에 시리즈별 배경 4장을 준비합니다.
+1. `ai-backgrounds/series/` 아래에 시리즈별 배경을 준비합니다.
 2. `python3 tools/generate_thumbnails.py --check-backgrounds`로 배경 파일 존재 여부를 확인합니다.
 3. `python3 tools/generate_thumbnails.py`로 게시글/시리즈 썸네일을 다시 렌더링합니다.
 4. `python3 tools/generate_thumbnails.py --check`로 최종 PNG 크기를 확인합니다.

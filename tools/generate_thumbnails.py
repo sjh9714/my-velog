@@ -83,6 +83,15 @@ SERIES: tuple[SeriesConfig, ...] = (
         palette=Palette(accent="#facc15", accent_2="#60a5fa", chip_text="#dbeafe"),
         chips=("Programmers", "Python", "Algorithm"),
     ),
+    SeriesConfig(
+        key="hana-finance-ai",
+        name="하나 청년 금융인재 프로젝트",
+        tagline="Finance data, AI, and RAG portfolio",
+        source=ROOT / "posts" / "velog" / "hana-finance-ai",
+        output_dir=OUTPUT_ROOT / "posts" / "hana-finance-ai",
+        palette=Palette(accent="#34d399", accent_2="#38bdf8", chip_text="#dcfce7"),
+        chips=("Finance", "AI", "RAG"),
+    ),
 )
 
 
@@ -101,6 +110,11 @@ def display_title(title: str) -> str:
         r"\[실시간 채팅 백엔드\]",
         r"\[콘서트 예매 시스템\]",
         r"\[오픈소스 기여\]",
+        r"\[하나 금융인재 프로젝트\]",
+        r"\[금융 데이터 분석\]",
+        r"\[금융 AI\]",
+        r"\[RAG 챗봇\]",
+        r"\[LangGraph\]",
     )
     changed = True
     while changed:
