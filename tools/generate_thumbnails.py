@@ -76,6 +76,15 @@ SERIES: tuple[SeriesConfig, ...] = (
         chips=("Open Source", "Regression Test", "PR"),
     ),
     SeriesConfig(
+        key="open-source-casebook",
+        name="오픈소스 기여 사례집",
+        tagline="Merged PR case studies",
+        source=ROOT / "posts" / "velog" / "open-source-casebook",
+        output_dir=OUTPUT_ROOT / "posts" / "open-source-casebook",
+        palette=Palette(accent="#22c55e", accent_2="#2563eb", chip_text="#dcfce7"),
+        chips=("Open Source", "Case Study", "PR"),
+    ),
+    SeriesConfig(
         key="programmers-python",
         name="프로그래머스 Python 코딩테스트",
         tagline="Daily algorithm notes in Python",

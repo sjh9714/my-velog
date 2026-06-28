@@ -245,3 +245,22 @@
 | 8 | [오픈소스 PR 포트폴리오] Biome lint rule edge case 고치기 | https://velog.io/@sjh9714/oss-pr-biome-optional-chain-inequality | `assets/thumbnails/posts/open-source-casebook/oss-pr-biome-optional-chain-inequality.png` | https://velog.velcdn.com/images/sjh9714/post/046a8135-c3af-4db7-9c80-d7df852be0c7/image.png | applied |
 | 9 | [오픈소스 PR 포트폴리오] Yazi preview cache 디렉터리 권한 제한하기 | https://velog.io/@sjh9714/oss-pr-yazi-preview-cache-permissions | `assets/thumbnails/posts/open-source-casebook/oss-pr-yazi-preview-cache-permissions.png` | https://velog.velcdn.com/images/sjh9714/post/a4b6ae65-45dc-4f77-8fcc-ea59ea1dcc0c/image.png | applied |
 | 10 | [오픈소스 PR 포트폴리오] Nushell bit shift 기본값 버그 수정하기 | https://velog.io/@sjh9714/oss-pr-nushell-bit-shift-default-byte-size | `assets/thumbnails/posts/open-source-casebook/oss-pr-nushell-bit-shift-default-byte-size.png` | https://velog.velcdn.com/images/sjh9714/post/3f7d722e-4b28-49a7-8ac3-a078397e113d/image.png | applied |
+
+## 2026-06-28 14:29:03 KST - 오픈소스 기여 사례집 배경 분리 적용
+
+- 변경 내용: `오픈소스 기여`는 `open-source-3.jpg`, `오픈소스 기여 사례집`은 `open-source-1.jpg`를 사용하도록 분리
+- 적용 대상: `오픈소스 기여 사례집` live-only 게시글 10개
+- 최종 검증: Velog GraphQL 최근 게시글 목록 기준 사례집 10개 모두 `thumbnail` 값 존재, 최근 50개 게시글 내 썸네일 누락 0개
+
+| No | 제목 | Velog URL | 로컬 썸네일 | 확인된 썸네일 | 결과 |
+|---:|---|---|---|---|---|
+| 1 | [오픈소스 PR 포트폴리오] SitePing retry queue stale identity 문제 수정하기 | https://velog.io/@sjh9714/oss-pr-siteping-stale-identity-retry | `assets/thumbnails/posts/open-source-casebook/oss-pr-siteping-stale-identity-retry.png` | https://velog.velcdn.com/images/sjh9714/post/fb748040-6789-42c0-a4e8-26a5a77ecfa0/image.png | applied |
+| 2 | [오픈소스 PR 포트폴리오] GuideLLM nested Path 직렬화 문제 수정하기 | https://velog.io/@sjh9714/oss-pr-guidellm-nested-path-serialization | `assets/thumbnails/posts/open-source-casebook/oss-pr-guidellm-nested-path-serialization.png` | https://velog.velcdn.com/images/sjh9714/post/23f64ea6-6673-4385-8eaa-64799ea4f13b/image.png | applied |
+| 3 | [오픈소스 PR 포트폴리오] fingerprint-suite iframe srcdoc hook 수정하기 | https://velog.io/@sjh9714/oss-pr-fingerprint-suite-srcdoc-hook | `assets/thumbnails/posts/open-source-casebook/oss-pr-fingerprint-suite-srcdoc-hook.png` | https://velog.velcdn.com/images/sjh9714/post/6bf62c7c-e1e1-438a-804a-9f843a7c7012/image.png | applied |
+| 4 | [오픈소스 PR 포트폴리오] Kong struct tag 조합 버그 수정하기 | https://velog.io/@sjh9714/oss-pr-kong-mixed-tags | `assets/thumbnails/posts/open-source-casebook/oss-pr-kong-mixed-tags.png` | https://velog.velcdn.com/images/sjh9714/post/40fe23c5-1e0b-4a08-adac-0e7b1aeadd18/image.png | applied |
+| 5 | [오픈소스 PR 포트폴리오] WebdriverIO mock calls에 postData 보존하기 | https://velog.io/@sjh9714/oss-pr-webdriverio-mock-postdata | `assets/thumbnails/posts/open-source-casebook/oss-pr-webdriverio-mock-postdata.png` | https://velog.velcdn.com/images/sjh9714/post/997594dc-2881-47c9-8095-9822492b851e/image.png | applied |
+| 6 | [오픈소스 PR 포트폴리오] MudBlazor 모바일 DataGrid 로딩 표시 고치기 | https://velog.io/@sjh9714/oss-pr-mudblazor-mobile-loading-indicator | `assets/thumbnails/posts/open-source-casebook/oss-pr-mudblazor-mobile-loading-indicator.png` | https://velog.velcdn.com/images/sjh9714/post/24e094f7-c224-4ffa-b1b0-43172a57b94c/image.png | applied |
+| 7 | [오픈소스 PR 포트폴리오] pipx app script shebang 격리 문제 수정하기 | https://velog.io/@sjh9714/oss-pr-pipx-shebang-isolation | `assets/thumbnails/posts/open-source-casebook/oss-pr-pipx-shebang-isolation.png` | https://velog.velcdn.com/images/sjh9714/post/a0adeb18-c930-4f02-ab8e-e36df3f946ef/image.png | applied |
+| 8 | [오픈소스 PR 포트폴리오] Biome lint rule edge case 고치기 | https://velog.io/@sjh9714/oss-pr-biome-optional-chain-inequality | `assets/thumbnails/posts/open-source-casebook/oss-pr-biome-optional-chain-inequality.png` | https://velog.velcdn.com/images/sjh9714/post/d0c64676-74b4-40c9-b226-8018aab2213c/image.png | applied |
+| 9 | [오픈소스 PR 포트폴리오] Yazi preview cache 디렉터리 권한 제한하기 | https://velog.io/@sjh9714/oss-pr-yazi-preview-cache-permissions | `assets/thumbnails/posts/open-source-casebook/oss-pr-yazi-preview-cache-permissions.png` | https://velog.velcdn.com/images/sjh9714/post/d3443c6d-df62-4cfe-aee5-48bc20b59b28/image.png | applied |
+| 10 | [오픈소스 PR 포트폴리오] Nushell bit shift 기본값 버그 수정하기 | https://velog.io/@sjh9714/oss-pr-nushell-bit-shift-default-byte-size | `assets/thumbnails/posts/open-source-casebook/oss-pr-nushell-bit-shift-default-byte-size.png` | https://velog.velcdn.com/images/sjh9714/post/81205075-aedc-451b-bcb6-7fdeabb286b3/image.png | applied |
