@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 """Generate Velog thumbnail images from local Markdown posts.
 
-This renderer uses AI-generated, text-free bitmap backgrounds and overlays
-crisp Korean/English text with a local HTML/CSS template captured by Chrome.
+This renderer uses selected photo backgrounds and overlays crisp
+Korean/English text with a local HTML/CSS template captured by Chrome.
 """
 
 from __future__ import annotations
 
 import argparse
 import base64
+import json
 import html
 import mimetypes
 import re
@@ -23,7 +24,7 @@ from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[1]
 OUTPUT_ROOT = ROOT / "assets" / "thumbnails"
-AI_ROOT = OUTPUT_ROOT / "ai-backgrounds"
+PHOTO_ROOT = OUTPUT_ROOT / "photo-backgrounds"
 SIZE = (1080, 565)
 CHROME = Path("/Applications/Google Chrome.app/Contents/MacOS/Google Chrome")
 
@@ -110,6 +111,7 @@ def display_title(title: str) -> str:
         r"\[실시간 채팅 백엔드\]",
         r"\[콘서트 예매 시스템\]",
         r"\[오픈소스 기여\]",
+        r"\[오픈소스 PR 포트폴리오\]",
         r"\[하나 금융인재 프로젝트\]",
         r"\[금융 데이터 분석\]",
         r"\[금융 AI\]",
@@ -142,6 +144,27 @@ def post_extra_chips(path: Path, title: str) -> tuple[str, ...]:
     return tuple(chips[:2])
 
 
+def series_by_key() -> dict[str, SeriesConfig]:
+    return {config.key: config for config in SERIES}
+
+
+def live_post_sources() -> list[tuple[SeriesConfig, Path, list[dict[str, object]], tuple[str, ...]]]:
+    manifest_root = OUTPUT_ROOT / "live-velog-posts"
+    if not manifest_root.exists():
+        return []
+
+    configs = series_by_key()
+    sources: list[tuple[SeriesConfig, Path, list[dict[str, object]], tuple[str, ...]]] = []
+    for manifest in sorted(manifest_root.glob("*.json")):
+        data = json.loads(manifest.read_text(encoding="utf-8"))
+        config = configs[data["series_key"]]
+        output_dir = OUTPUT_ROOT / data.get("output_dir", f"posts/{manifest.stem}")
+        posts = list(data.get("posts", []))
+        default_chips = tuple(data.get("default_chips", ("Live",)))
+        sources.append((config, output_dir, posts, default_chips))
+    return sources
+
+
 def esc(value: str) -> str:
     return html.escape(value, quote=True)
 
@@ -150,17 +173,17 @@ def chip_markup(chips: tuple[str, ...]) -> str:
     return "\n".join(f'<span class="chip">{esc(chip)}</span>' for chip in chips)
 
 
-def ai_background_path(config: SeriesConfig, stem: str | None = None) -> Path:
-    return AI_ROOT / "series" / f"{config.key}.png"
+def photo_background_path(config: SeriesConfig, stem: str | None = None) -> Path:
+    return PHOTO_ROOT / "series" / f"{config.key}.jpg"
 
 
 def expected_background_paths() -> list[Path]:
-    return [ai_background_path(config) for config in SERIES]
+    return [photo_background_path(config) for config in SERIES]
 
 
 def image_data_url(path: Path) -> str:
     if not path.exists():
-        raise FileNotFoundError(f"Missing AI background: {path}")
+        raise FileNotFoundError(f"Missing photo background: {path}")
     mime = mimetypes.guess_type(path.name)[0] or "image/png"
     encoded = base64.b64encode(path.read_bytes()).decode("ascii")
     return f"data:{mime};base64,{encoded}"
@@ -440,7 +463,7 @@ def generate() -> list[Path]:
                 config.tagline,
                 series_out,
                 ("Series",),
-                ai_background_path(config),
+                photo_background_path(config),
                 tmp_dir,
             )
             generated.append(series_out)
@@ -454,7 +477,23 @@ def generate() -> list[Path]:
                     config.name,
                     out,
                     post_extra_chips(post, title),
-                    ai_background_path(config),
+                    photo_background_path(config),
+                    tmp_dir,
+                )
+                generated.append(out)
+
+        for config, output_dir, posts, default_chips in live_post_sources():
+            for post in posts:
+                title = str(post["title"])
+                slug = str(post["url_slug"])
+                out = output_dir / f"{slug}.png"
+                render_card(
+                    config,
+                    display_title(title),
+                    config.name,
+                    out,
+                    default_chips,
+                    photo_background_path(config),
                     tmp_dir,
                 )
                 generated.append(out)
@@ -465,6 +504,8 @@ def all_expected_paths() -> list[Path]:
     paths = [OUTPUT_ROOT / "series" / f"{config.key}.png" for config in SERIES]
     for config in SERIES:
         paths.extend(config.output_dir / f"{post.stem}.png" for post in markdown_posts(config))
+    for _, output_dir, posts, _ in live_post_sources():
+        paths.extend(output_dir / f"{post['url_slug']}.png" for post in posts)
     return paths
 
 
@@ -488,13 +529,17 @@ def check_images(paths: list[Path]) -> None:
 
 
 def expected_count() -> int:
-    return len(SERIES) + sum(len(markdown_posts(config)) for config in SERIES)
+    return (
+        len(SERIES)
+        + sum(len(markdown_posts(config)) for config in SERIES)
+        + sum(len(posts) for _, _, posts, _ in live_post_sources())
+    )
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Generate Velog thumbnail PNGs.")
     parser.add_argument("--check", action="store_true", help="Check generated images without rewriting them.")
-    parser.add_argument("--check-backgrounds", action="store_true", help="Check required AI backgrounds.")
+    parser.add_argument("--check-backgrounds", action="store_true", help="Check required photo backgrounds.")
     parser.add_argument("--chrome-version", action="store_true", help="Print the Chrome version used by the renderer.")
     args = parser.parse_args()
 
@@ -508,7 +553,7 @@ def main() -> None:
     if args.check_backgrounds:
         paths = expected_background_paths()
         check_backgrounds(paths)
-        print(f"Checked {len(paths)} AI backgrounds.")
+        print(f"Checked {len(paths)} photo backgrounds.")
         return
 
     if args.check:

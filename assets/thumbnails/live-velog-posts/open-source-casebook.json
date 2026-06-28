@@ -1,0 +1,60 @@
+{
+  "series_key": "open-source",
+  "series_name": "오픈소스 기여 사례집",
+  "output_dir": "posts/open-source-casebook",
+  "default_chips": [
+    "PR Case"
+  ],
+  "posts": [
+    {
+      "id": "6b5eab6a-df7f-466b-a5f2-2f31c18b7aea",
+      "title": "[오픈소스 PR 포트폴리오] SitePing retry queue stale identity 문제 수정하기",
+      "url_slug": "oss-pr-siteping-stale-identity-retry"
+    },
+    {
+      "id": "e6bc715d-016a-4274-8a32-c7d5f3a3d71c",
+      "title": "[오픈소스 PR 포트폴리오] GuideLLM nested Path 직렬화 문제 수정하기",
+      "url_slug": "oss-pr-guidellm-nested-path-serialization"
+    },
+    {
+      "id": "7b8be8cc-f6ca-473c-85b2-a61ddb257180",
+      "title": "[오픈소스 PR 포트폴리오] fingerprint-suite iframe srcdoc hook 수정하기",
+      "url_slug": "oss-pr-fingerprint-suite-srcdoc-hook"
+    },
+    {
+      "id": "53a5d91a-fad1-4e9d-9f3b-fc86bb7e737c",
+      "title": "[오픈소스 PR 포트폴리오] Kong struct tag 조합 버그 수정하기",
+      "url_slug": "oss-pr-kong-mixed-tags"
+    },
+    {
+      "id": "6d51e0b0-a3d6-44ab-8c0f-fd92a14f7dca",
+      "title": "[오픈소스 PR 포트폴리오] WebdriverIO mock calls에 postData 보존하기",
+      "url_slug": "oss-pr-webdriverio-mock-postdata"
+    },
+    {
+      "id": "2db6882b-73e7-4603-8ee6-98928fbdb935",
+      "title": "[오픈소스 PR 포트폴리오] MudBlazor 모바일 DataGrid 로딩 표시 고치기",
+      "url_slug": "oss-pr-mudblazor-mobile-loading-indicator"
+    },
+    {
+      "id": "d0cc77be-eaa8-4e26-a252-f7131edf2b3b",
+      "title": "[오픈소스 PR 포트폴리오] pipx app script shebang 격리 문제 수정하기",
+      "url_slug": "oss-pr-pipx-shebang-isolation"
+    },
+    {
+      "id": "71d5975d-a0da-4846-b8f0-534f2d68a62b",
+      "title": "[오픈소스 PR 포트폴리오] Biome lint rule edge case 고치기",
+      "url_slug": "oss-pr-biome-optional-chain-inequality"
+    },
+    {
+      "id": "b135cc69-31bd-4789-8024-623457bb00f8",
+      "title": "[오픈소스 PR 포트폴리오] Yazi preview cache 디렉터리 권한 제한하기",
+      "url_slug": "oss-pr-yazi-preview-cache-permissions"
+    },
+    {
+      "id": "bb2077c3-a473-4c2d-86c3-0cf6db6ac0f8",
+      "title": "[오픈소스 PR 포트폴리오] Nushell bit shift 기본값 버그 수정하기",
+      "url_slug": "oss-pr-nushell-bit-shift-default-byte-size"
+    }
+  ]
+}
